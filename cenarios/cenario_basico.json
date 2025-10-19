@@ -1,0 +1,32 @@
+{
+  "start": [7, 0],
+  "goal": [0, 7],
+  "grid": [
+    ["terra", "terra", "terra", "terra", "terra", "terra", "terra", "terra"],
+    ["terra", "terra", "terra", "lama", "lama", "lama", "terra", "terra"],
+    [
+      "terra",
+      "estrada",
+      "estrada",
+      "estrada",
+      "terra",
+      "lama",
+      "terra",
+      "terra"
+    ],
+    ["terra", "barreira", "terra", "terra", "terra", "terra", "terra", "terra"],
+    ["terra", "barreira", "terra", "lama", "lama", "terra", "terra", "terra"],
+    [
+      "terra",
+      "barreira",
+      "estrada",
+      "estrada",
+      "estrada",
+      "estrada",
+      "estrada",
+      "terra"
+    ],
+    ["terra", "barreira", "terra", "lama", "terra", "lama", "terra", "terra"],
+    ["terra", "terra", "terra", "terra", "terra", "terra", "terra", "terra"]
+  ]
+}
