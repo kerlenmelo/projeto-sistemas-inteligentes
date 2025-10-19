@@ -12,3 +12,23 @@ print("Custo em (2,1):", tabuleiro.custo((2,1)))
 print("Bloqueado (3,1):", tabuleiro.bloqueado((3,1)))
 print("Menor custo possível:", tabuleiro.menor_custo_transponivel())
 print("Vizinhos do cavalo em (7,0):", tabuleiro.vizinhos_cavalo((7,0)))
+
+
+from src.busca_a_estrela import busca_a_estrela
+
+inicio = (7, 0)
+objetivo = (0, 7)
+
+print("\n--- Teste do algoritmo A* ---")
+caminho, custo = busca_a_estrela(tabuleiro, inicio, objetivo)
+print("Caminho encontrado:", caminho)
+print("Custo total:", custo)
+
+
+from src.interface_grafica import mostrar_busca_animada
+
+inicio = (7, 0)
+objetivo = (0, 7)
+
+print("\n--- Execução com tabuleiro realista ---")
+mostrar_busca_animada(tabuleiro, inicio, objetivo, velocidade=0.5)

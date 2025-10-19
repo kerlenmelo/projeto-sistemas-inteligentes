@@ -3,7 +3,7 @@
 # =============================================================
 
 from typing import List, Tuple
-from src.board import Tabuleiro, Coordenada, dentro_dos_limites
+from src.tabuleiro import Tabuleiro, Coordenada, dentro_dos_limites
 
 # -------------------------------------------------------------
 # Classe Cavalo
