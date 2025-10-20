@@ -29,7 +29,7 @@ ALTURA  = BARRA_STATUS_H+(2*MARGEM_EXTERNA)+(2*AREA_ROTULO)+(BOARD_N*CELULA)
 def selecionar_heuristica():
     pygame.init()
     largura, altura = 820, 540
-    tela = pygame.display.set_mode((largura, altura))
+    tela = pygame.display.set_mode((largura, altura), pygame.RESIZABLE)
     pygame.display.set_caption("Seleção de Heurística")
 
     fonte_titulo = pygame.font.SysFont("Arial", 36, bold=True)
@@ -336,23 +336,29 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
     fonte_passos = pygame.font.SysFont("Arial", 22, bold=True)
     fonte_caminho = pygame.font.SysFont("Consolas", 18)
     fonte_rotulo = pygame.font.SysFont("Arial", 18, bold=True)
+    fonte_botao = pygame.font.SysFont("Arial", 20, bold=True)
     imgs = carregar_imagens_terreno(CELULA)
     cavalo_img = carregar_cavalo()
-    cor_caminho, cor_explorado = (255,255,0), (220,0,0)
-    x0, y0 = origem_tabuleiro()
-    clock = pygame.time.Clock()
 
-    # 🎨 Cores do tabuleiro (bege e marrom escuro)
+    # 🎨 Cores
     COR_BEGE = (245, 222, 179)
     COR_MARROM = (101, 67, 33)
     COR_BORDA_EXTERNA = (80, 50, 20)
     COR_BORDA_INTERNA = (212, 175, 55)
+    cor_caminho, cor_explorado = (255,255,0), (220,0,0)
+
+    x0, y0 = origem_tabuleiro()
+    clock = pygame.time.Clock()
+
+    # botão voltar (superior direito)
+    BOTAO_VOLTAR = pygame.Rect(LARGURA - 130, 5, 110, 30)
 
     caminho, custo, explorados, _ = busca_a_estrela_animado(tabuleiro, inicio, objetivo, tipo)
     etapa, rodando = 0, True
     while rodando:
         for e in pygame.event.get():
-            if e.type == pygame.QUIT: rodando = False
+            if e.type == pygame.QUIT:
+                rodando = False
             if e.type == pygame.KEYDOWN and e.key == pygame.K_r:
                 tabuleiro = gerar_tabuleiro_aleatorio()
                 caminho, custo, explorados, _ = busca_a_estrela_animado(tabuleiro, inicio, objetivo, tipo)
@@ -365,6 +371,15 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
                 gerar_relatorio_caminho(tabuleiro, caminho, custo, heuristica=tipo)
                 sys.stdout = antigo
                 mostrar_relatorio_sobreposto_texto(tela, buffer.getvalue(), titulo="Relatório Analítico")
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                if BOTAO_VOLTAR.collidepoint(e.pos):
+                    # retorna ao menu principal
+                    tipo = selecionar_heuristica()
+                    if tipo == "comparar":
+                        comparar_heuristicas(tabuleiro, inicio, objetivo, velocidade)
+                    else:
+                        mostrar_busca_animada(tabuleiro, inicio, objetivo, velocidade)
+                    return
 
         tela.fill((255,255,255))
         pygame.draw.rect(tela, (20,20,20), (0,0,LARGURA,BARRA_STATUS_H))
@@ -372,8 +387,17 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
         msg = f"Heurística {tipo.upper()} | {'Executando...' if executando else 'Concluído!'} | Nós: {etapa}/{len(explorados)} | Custo: {custo:.2f}"
         tela.blit(fonte_status.render(msg, True, (255,255,255)), (MARGEM_EXTERNA, 10))
 
+        # ====== BOTÃO VOLTAR (superior direito) ======
+        mouse = pygame.mouse.get_pos()
+        hover = BOTAO_VOLTAR.collidepoint(mouse)
+        cor_btn = (100,150,255) if hover else (70,120,200)
+        pygame.draw.rect(tela, cor_btn, BOTAO_VOLTAR, border_radius=8)
+        texto_voltar = fonte_botao.render("Voltar", True, (255,255,255))
+        tela.blit(texto_voltar, (BOTAO_VOLTAR.centerx - texto_voltar.get_width()//2,
+                                 BOTAO_VOLTAR.centery - texto_voltar.get_height()//2))
+        # =============================================
+
         letras = ["A","B","C","D","E","F","G","H"]
-        # --- Desenha as casas do tabuleiro ---
         for lin in range(BOARD_N):
             for col in range(BOARD_N):
                 cor = COR_BEGE if (lin+col)%2==0 else COR_MARROM
@@ -381,7 +405,7 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
                 img = imgs.get(tabuleiro.grade[lin][col])
                 if img: tela.blit(img, (x0+col*CELULA, y0+lin*CELULA))
 
-        # --- Rótulos laterais e superiores ---
+        # Rótulos laterais e superiores
         for i in range(BOARD_N):
             letra = fonte_rotulo.render(letras[i], True, (0,0,0))
             num = fonte_rotulo.render(str(8-i), True, (0,0,0))
@@ -390,41 +414,29 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
             tela.blit(num, (x0 - AREA_ROTULO + 5, y0 + i*CELULA + CELULA//2 - num.get_height()//2))
             tela.blit(num, (x0 + BOARD_N*CELULA + 8, y0 + i*CELULA + CELULA//2 - num.get_height()//2))
 
-        # === 🪵 BORDA DE MADEIRA AO REDOR DO TABULEIRO ===
-        # Moldura externa marrom escuro
-        pygame.draw.rect(
-            tela,
-            COR_BORDA_EXTERNA,
-            (x0 - 4, y0 - 4, BOARD_N*CELULA + 8, BOARD_N*CELULA + 8),
-            6
-        )
-        # Borda interna dourada
-        pygame.draw.rect(
-            tela,
-            COR_BORDA_INTERNA,
-            (x0, y0, BOARD_N*CELULA, BOARD_N*CELULA),
-            4
-        )
+        # Borda do tabuleiro
+        pygame.draw.rect(tela, COR_BORDA_EXTERNA, (x0 - 4, y0 - 4, BOARD_N*CELULA + 8, BOARD_N*CELULA + 8), 6)
+        pygame.draw.rect(tela, COR_BORDA_INTERNA, (x0, y0, BOARD_N*CELULA, BOARD_N*CELULA), 4)
 
-        # --- Início e chegada ---
+        # Início e chegada
         if imgs.get("inicio"):
             tela.blit(imgs["inicio"], (x0 + inicio[1]*CELULA, y0 + inicio[0]*CELULA))
         if imgs.get("chegada"):
             tela.blit(imgs["chegada"], (x0 + objetivo[1]*CELULA, y0 + objetivo[0]*CELULA))
 
-        # --- Nós explorados ---
+        # Nós explorados
         if executando:
             for (lin,col) in explorados[:etapa]:
                 cx = x0+col*CELULA+CELULA//2
                 cy = y0+lin*CELULA+CELULA//2
                 pygame.draw.circle(tela, cor_explorado, (cx,cy), 6)
 
-        # --- Cavalo ---
+        # Cavalo
         pos = explorados[etapa] if etapa < len(explorados) else (caminho[-1] if caminho else inicio)
         cx, cy = x0+pos[1]*CELULA+CELULA//2, y0+pos[0]*CELULA+CELULA//2
         tela.blit(cavalo_img, (cx-cavalo_img.get_width()//2, cy-cavalo_img.get_height()//2))
 
-        # --- Caminho final ---
+        # Caminho final
         if not executando and caminho:
             for i,(lin,col) in enumerate(caminho):
                 cx1 = x0+col*CELULA+CELULA//2
