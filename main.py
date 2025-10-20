@@ -4,12 +4,13 @@
 
 import json
 from src.tabuleiro import Tabuleiro
-from src.busca_a_estrela import busca_a_estrela
 from src.interface_grafica import mostrar_busca_animada
 from src.gerador_tabuleiro import gerar_tabuleiro_aleatorio
-from src.relatorio_custos import gerar_relatorio_caminho
 
 
+# -------------------------------------------------------------
+# EXECUÇÃO COM TABULEIRO FIXO
+# -------------------------------------------------------------
 def executar_tabuleiro_fixo():
     """Executa o algoritmo e a interface com o cenário JSON fixo."""
     with open("cenarios/cenario_basico.json", encoding="utf-8") as f:
@@ -26,18 +27,14 @@ def executar_tabuleiro_fixo():
 
     inicio = (7, 0)
     objetivo = (0, 7)
-    print("\n--- Teste do algoritmo A* ---")
-    caminho, custo = busca_a_estrela(tabuleiro, inicio, objetivo)
-    print("Caminho encontrado:", caminho)
-    print("Custo total:", custo)
 
-    # Relatório analítico
-    gerar_relatorio_caminho(tabuleiro, caminho, custo)
-
-    print("\n--- Execução com tabuleiro fixo ---")
+    print("\n--- Execução visual com tabuleiro fixo ---")
     mostrar_busca_animada(tabuleiro, inicio, objetivo, velocidade=0.4)
 
 
+# -------------------------------------------------------------
+# EXECUÇÃO COM TABULEIRO ALEATÓRIO
+# -------------------------------------------------------------
 def executar_tabuleiro_aleatorio():
     """Executa o algoritmo e a interface com um tabuleiro gerado aleatoriamente."""
     print("\n=== TESTE: TABULEIRO ALEATÓRIO ===")
@@ -45,21 +42,18 @@ def executar_tabuleiro_aleatorio():
 
     inicio = (7, 0)
     objetivo = (0, 7)
-    caminho, custo = busca_a_estrela(tabuleiro, inicio, objetivo)
-    print("Caminho encontrado:", caminho)
-    print("Custo total:", custo)
 
-    # Relatório analítico
-    gerar_relatorio_caminho(tabuleiro, caminho, custo)
-
-    print("\n--- Execução com tabuleiro aleatório ---")
+    print("\n--- Execução visual com tabuleiro aleatório ---")
     mostrar_busca_animada(tabuleiro, inicio, objetivo, velocidade=0.35)
 
 
+# -------------------------------------------------------------
+# EXECUÇÃO PRINCIPAL
+# -------------------------------------------------------------
 if __name__ == "__main__":
     # Escolha o modo de execução:
-    # modo = "fixo"  → usa o cenário JSON
-    # modo = "aleatorio"  → gera novo tabuleiro a cada execução
+    #   "fixo"      → usa o cenário JSON
+    #   "aleatorio" → gera novo tabuleiro a cada execução
     modo = "aleatorio"
 
     if modo == "fixo":
