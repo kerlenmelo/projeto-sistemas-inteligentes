@@ -29,7 +29,7 @@ class No:
 # -------------------------------------------------------------
 def heuristica_h1(atual: Coordenada, objetivo: Coordenada, tabuleiro: Tabuleiro) -> float:
     """
-    H₁: Heurística simples (distância geométrica × menor custo de terreno).
+    H1: Heurística simples (distância geométrica × menor custo de terreno).
     Usa distância de Chebyshev (movimentos em grade) multiplicada
     pelo menor custo transponível do tabuleiro.
     """
@@ -69,8 +69,8 @@ def movimentos_minimos_cavalo(inicio: Coordenada, objetivo: Coordenada) -> int:
 
 def heuristica_h2(atual: Coordenada, objetivo: Coordenada, tabuleiro: Tabuleiro) -> float:
     """
-    H₂: Heurística informada (mínimo de movimentos reais do cavalo × menor custo).
-    É mais forte e eficiente que H₁, mas ainda admissível.
+    H2: Heurística informada (mínimo de movimentos reais do cavalo × menor custo).
+    É mais forte e eficiente que H1, mas ainda admissível.
     """
     menor_custo = tabuleiro.menor_custo_transponivel()
     min_movimentos = movimentos_minimos_cavalo(atual, objetivo)
