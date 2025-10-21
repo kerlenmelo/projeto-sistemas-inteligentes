@@ -1,5 +1,5 @@
 # =============================================================
-#  busca_a_estrela.py — Implementação do algoritmo A* (Etapa 5)
+#  busca_a_estrela.py — Implementação do algoritmo A*
 # =============================================================
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ class No:
 # -------------------------------------------------------------
 def heuristica_h1(atual: Coordenada, objetivo: Coordenada, tabuleiro: Tabuleiro) -> float:
     """
-    H1: Heurística simples (distância geométrica × menor custo de terreno).
+    H₁: Heurística simples (distância geométrica x menor custo de terreno).
     Usa distância de Chebyshev (movimentos em grade) multiplicada
     pelo menor custo transponível do tabuleiro.
     """
@@ -69,7 +69,7 @@ def movimentos_minimos_cavalo(inicio: Coordenada, objetivo: Coordenada) -> int:
 
 def heuristica_h2(atual: Coordenada, objetivo: Coordenada, tabuleiro: Tabuleiro) -> float:
     """
-    H2: Heurística informada (mínimo de movimentos reais do cavalo × menor custo).
+    H2: Heurística informada (mínimo de movimentos reais do cavalo x menor custo).
     É mais forte e eficiente que H1, mas ainda admissível.
     """
     menor_custo = tabuleiro.menor_custo_transponivel()

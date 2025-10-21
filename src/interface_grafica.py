@@ -1,5 +1,5 @@
 # =============================================================
-# interface_grafica.py — Interface otimizada com comparação H₁ × H₂
+# interface_grafica.py — Interface otimizada com comparação H1 x H2
 # =============================================================
 
 import os, time, pygame, io, sys
