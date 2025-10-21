@@ -1,10 +1,10 @@
 # =============================================================
-# interface_grafica.py — Interface otimizada com comparação H₁ × H₂
+# interface_grafica.py — Interface otimizada com comparação H1 x H2
 # =============================================================
 
-import os, time, math, pygame, io, sys
+import os, time, pygame, io, sys
+from src.gerador_tabuleiro import gerar_tabuleiro_aleatorio
 from src.tabuleiro import Tabuleiro, Terreno
-from src.busca_a_estrela import busca_a_estrela
 
 # -------------------- CONFIGURAÇÕES VISUAIS --------------------
 CELULA = 65
@@ -28,8 +28,8 @@ ALTURA  = BARRA_STATUS_H+(2*MARGEM_EXTERNA)+(2*AREA_ROTULO)+(BOARD_N*CELULA)
 # ------------------- TELA DE SELEÇÃO DE HEURÍSTICA -------------------
 def selecionar_heuristica():
     pygame.init()
-    largura, altura = 820, 540
-    tela = pygame.display.set_mode((largura, altura))
+    largura, altura = 820, 590
+    tela = pygame.display.set_mode((largura, altura), pygame.RESIZABLE)
     pygame.display.set_caption("Seleção de Heurística")
 
     fonte_titulo = pygame.font.SysFont("Arial", 36, bold=True)
@@ -40,6 +40,7 @@ def selecionar_heuristica():
         "h2": pygame.Rect(largura//2 - 230, 260, 460, 60),
         "nula": pygame.Rect(largura//2 - 230, 350, 460, 60),
         "comparar": pygame.Rect(largura//2 - 230, 440, 460, 60),
+        "voltar": pygame.Rect(largura//2 - 230, 520, 460, 60)
     }
 
     escolha = None
@@ -52,8 +53,11 @@ def selecionar_heuristica():
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
                 for heur, rect in botoes.items():
                     if rect.collidepoint(e.pos):
-                        escolha = heur
-                        rodando = False
+                        if heur == "voltar":
+                            rodando = False  # Voltar ao menu inicial
+                        else:
+                            escolha = heur
+                            rodando = False
 
         tela.fill((245,245,245))
         titulo = fonte_titulo.render("Escolha a heurística para o A*", True, (0,0,0))
@@ -66,7 +70,8 @@ def selecionar_heuristica():
                 "h1": "H1 - Fraca (Distância × Custo Mínimo)",
                 "h2": "H2 - Forte (Movimentos × Custo Mínimo)",
                 "nula": "Sem Heurística (Dijkstra)",
-                "comparar": "Comparar H1 × H2 (modo visual)"
+                "comparar": "Comparar H1 × H2 (modo visual)",
+                "voltar": "Voltar ao Menu"
             }[heur]
             texto = fonte_botao.render(label, True, (255,255,255))
             tela.blit(texto, (rect.centerx - texto.get_width()//2,
@@ -75,7 +80,8 @@ def selecionar_heuristica():
         clock.tick(30)
 
     pygame.quit()
-    return escolha or "h1"
+    return escolha
+
 
 
 # ------------------- BUSCA A* (ANIMADA) -------------------
@@ -157,22 +163,34 @@ def mostrar_relatorio_sobreposto_texto(tela, texto, titulo="Relatório"):
     rodando = True
     while rodando:
         for e in pygame.event.get():
-            if e.type == pygame.QUIT: rodando = False
-            elif e.type == pygame.MOUSEWHEEL: scroll_y += e.y * 25
+            if e.type == pygame.QUIT:  # Fechar a janela
+                rodando = False
+            elif e.type == pygame.MOUSEWHEEL:  # Scroll
+                scroll_y += e.y * 25
             elif e.type == pygame.KEYDOWN:
-                if e.key in (pygame.K_RETURN, pygame.K_ESCAPE): rodando = False
-        tela.fill((245,245,245))
-        titulo_txt = fonte_titulo.render(titulo, True, (0,0,0))
+                if e.key in (pygame.K_RETURN, pygame.K_ESCAPE):  # Pressionar ENTER ou ESC para sair
+                    rodando = False
+            elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                if botao_rect.collidepoint(e.pos):
+                    rodando = False 
+                    return
+
+        tela.fill((245, 245, 245))
+        titulo_txt = fonte_titulo.render(titulo, True, (0, 0, 0))
         tela.blit(titulo_txt, (largura//2 - titulo_txt.get_width()//2, 20))
         y = 70 + scroll_y
+
         for linha in linhas:
-            txt = fonte.render(linha, True, (20,20,20))
+            txt = fonte.render(linha, True, (20, 20, 20))
             tela.blit(txt, (40, y))
             y += 20
-        pygame.draw.rect(tela, (80,120,200), botao_rect, border_radius=10)
-        txt_btn = fonte_titulo.render("Voltar", True, (255,255,255))
+
+        # Desenhando o botão Voltar
+        pygame.draw.rect(tela, (80, 120, 200), botao_rect, border_radius=10)
+        txt_btn = fonte_titulo.render("Voltar", True, (255, 255, 255))
         tela.blit(txt_btn, (botao_rect.centerx - txt_btn.get_width()//2,
                             botao_rect.centery - txt_btn.get_height()//2))
+
         pygame.display.flip()
         clock.tick(30)
 
@@ -200,11 +218,11 @@ def comparar_heuristicas(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=0.35
                 return caminho, atual.g, explorados
             cavalo = Cavalo(pos)
             for viz in cavalo.movimentos_possiveis(tab):
-                if tab.bloqueado(viz): continue
-                novo_g = atual.g + tab.custo(viz)
+                if tabuleiro.bloqueado(viz): continue
+                novo_g = atual.g + tabuleiro.custo(viz)
                 if viz not in g or novo_g < g[viz]:
                     g[viz] = novo_g
-                    h = heur(viz, objetivo, tab)
+                    h = heur(viz, objetivo, tabuleiro)
                     f = novo_g + h
                     heapq.heappush(fila, No(f, viz, novo_g, h, pos))
                     pais[viz] = pos
@@ -220,36 +238,84 @@ def comparar_heuristicas(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=0.35
         fonte_info = pygame.font.SysFont("Arial", 18, bold=True)
         fonte_hint = pygame.font.SysFont("Arial", 16)
         clock = pygame.time.Clock()
-        celula, margem, offset_y = 48, 40, 100
+        celula, margem, offset_y = 48, 40, 120
         largura_tab = 8 * celula
         imgs = carregar_imagens_terreno(celula)
         cavalo_img = carregar_cavalo()
+
+        # Centralizar os tabuleiros
+        tabuleiro_h1_x = (largura_total - 2 * largura_tab - 40) // 2
+        tabuleiro_h2_x = tabuleiro_h1_x + largura_tab + 80
 
         # execuções
         t0 = time.time(); c1, custo1, e1 = executar_busca(tab, heuristica_h1); tempo1 = time.time()-t0
         t0 = time.time(); c2, custo2, e2 = executar_busca(tab, heuristica_h2); tempo2 = time.time()-t0
         etapa, max_etapas, terminou = 0, max(len(e1), len(e2)), False
 
+        # Detalhes do relatório comparativo
+        ganho_nos = 100 * (1 - len(e2)/len(e1)) if len(e1) else 0
+        ganho_tempo = 100 * (1 - tempo2/tempo1) if tempo1 else 0
+        h1_media_custo = custo1 / len(e1) if e1 else 0
+        h2_media_custo = custo2 / len(e2) if e2 else 0
+        h1_num_movimentos = len(c1)
+        h2_num_movimentos = len(c2)
+
         while True:
             for e in pygame.event.get():
                 if e.type == pygame.QUIT: pygame.quit(); return
                 if e.type == pygame.KEYDOWN:
                     if e.key == pygame.K_RETURN and terminou:
+
                         buffer = io.StringIO()
                         antigo = sys.stdout
                         sys.stdout = buffer
-                        print("\n=== RELATÓRIO COMPARATIVO DE HEURÍSTICAS ===\n")
+
+                        print("\n=== RELATÓRIO H1 ===\n")
                         gerar_relatorio_caminho(tab, c1, custo1, heuristica="h1")
+                        sys.stdout = antigo
+                        mostrar_relatorio_sobreposto_texto(tela, buffer.getvalue(), titulo="Relatório H1")
+
+                        buffer = io.StringIO()
+                        antigo = sys.stdout
+                        sys.stdout = buffer
+
+                        print("\n=== RELATÓRIO H2 ===\n")
                         gerar_relatorio_caminho(tab, c2, custo2, heuristica="h2")
-                        ganho_nos = 100*(1 - len(e2)/len(e1)) if len(e1) else 0
-                        ganho_tempo = 100*(1 - tempo2/tempo1) if tempo1 else 0
+                        sys.stdout = antigo
+                        mostrar_relatorio_sobreposto_texto(tela, buffer.getvalue(), titulo="Relatório H2")
+
+                        buffer = io.StringIO()
+                        antigo = sys.stdout
+                        sys.stdout = buffer
+
+                        print("\n=== RELATÓRIO COMPARATIVO DE HEURÍSTICAS ===\n")
+                        # Relatório detalhado comparativo
+                        print(f"H1 (Fraca) - Custo: {custo1:.2f} | Nós Expandidos: {len(e1)} | Tempo: {tempo1:.3f}s | Custo Médio por Nó: {h1_media_custo:.2f} | Movimentos: {h1_num_movimentos}")
+                        print(f"H2 (Forte) - Custo: {custo2:.2f} | Nós Expandidos: {len(e2)} | Tempo: {tempo2:.3f}s | Custo Médio por Nó: {h2_media_custo:.2f} | Movimentos: {h2_num_movimentos}")
+                        print(f"\nComparação entre as heurísticas:")
                         print(f"H2 expandiu {abs(ganho_nos):.1f}% {'menos' if ganho_nos>0 else 'mais'} nós.")
                         print(f"H2 foi {abs(ganho_tempo):.1f}% {'mais rápida' if ganho_tempo>0 else 'mais lenta'} que H1.")
+                        print(f"\nResumo Comparativo:")
+                        print(f"H1 teve {h1_num_movimentos} movimentos e H2 teve {h2_num_movimentos} movimentos.")
+                        print(f"H2 foi {'mais eficiente' if ganho_nos > 0 else 'menos eficiente'} com relação ao número de nós expandidos.")
+                        print(f"H1 tem um custo médio de {h1_media_custo:.2f} por nó, enquanto H2 tem {h2_media_custo:.2f}.")
                         sys.stdout = antigo
                         mostrar_relatorio_sobreposto_texto(tela, buffer.getvalue(), titulo="Relatório Comparativo H1 × H2")
+
                     elif e.key == pygame.K_r:
                         novo = gerar_tabuleiro_aleatorio()
                         executar_comparativo(novo)
+                        return
+
+                # Verifica se o botão "Voltar" foi pressionado
+                if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                    if BOTAO_VOLTAR.collidepoint(e.pos):
+                        # Chama a tela de heurísticas novamente
+                        tipo = selecionar_heuristica()
+                        if tipo == "comparar":
+                            comparar_heuristicas(tabuleiro, inicio, objetivo, velocidade)
+                        else:
+                            mostrar_busca_animada(tabuleiro, inicio, objetivo, velocidade)
                         return
 
             # desenho
@@ -303,15 +369,24 @@ def comparar_heuristicas(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=0.35
                             cy2 = offset_y + l2*celula + celula//2
                             pygame.draw.line(tela,(255,255,0),(cx1,cy1),(cx2,cy2),3)
 
-            desenhar(margem, e1, c1, "H1 - Fraca", (60,120,255))
-            desenhar(margem+largura_tab+80, e2, c2, "H2 - Forte", (255,120,60))
+            desenhar(tabuleiro_h1_x, e1, c1, "H1 - Fraca", (60,120,255))
+            desenhar(tabuleiro_h2_x, e2, c2, "H2 - Forte", (255,120,60))
 
-            tela.blit(fonte_info.render(f"H1 → Custo {custo1:.2f} | Nós {len(e1)} | Tempo {tempo1:.3f}s", True, (0,0,0)), (largura_total//2 - 260, altura_total - 70))
-            tela.blit(fonte_info.render(f"H2 → Custo {custo2:.2f} | Nós {len(e2)} | Tempo {tempo2:.3f}s", True, (0,0,0)), (largura_total//2 - 260, altura_total - 45))
+            tela.blit(fonte_info.render(f"H1 → Custo {custo1:.2f} | Nós {len(e1)} | Tempo {tempo1:.3f}s", True, (0,0,0)), (tabuleiro_h1_x, altura_total - 160))
+            tela.blit(fonte_info.render(f"H2 → Custo {custo2:.2f} | Nós {len(e2)} | Tempo {tempo2:.3f}s", True, (0,0,0)), (tabuleiro_h2_x, altura_total - 160))
+
+            # ====== BOTÃO VOLTAR ======
+            BOTAO_VOLTAR = pygame.Rect(largura_total//2 - 80, altura_total - 60, 160, 40)
+            mouse = pygame.mouse.get_pos()
+            hover = BOTAO_VOLTAR.collidepoint(mouse)
+            cor_btn = (100,150,255) if hover else (70,120,200)
+            pygame.draw.rect(tela, cor_btn, BOTAO_VOLTAR, border_radius=8)
+            texto_voltar = fonte_hint.render("Voltar", True, (255,255,255))
+            tela.blit(texto_voltar, (BOTAO_VOLTAR.centerx - texto_voltar.get_width()//2, BOTAO_VOLTAR.centery - texto_voltar.get_height()//2))
 
             if terminou:
                 dica = fonte_hint.render("Pressione ENTER para relatório | R para novo tabuleiro", True, (60,60,60))
-                tela.blit(dica, (largura_total//2 - dica.get_width()//2, altura_total - 25))
+                tela.blit(dica, (largura_total//2 - dica.get_width()//2, altura_total - 100))
 
             pygame.display.flip()
             clock.tick(30)
@@ -323,8 +398,13 @@ def comparar_heuristicas(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=0.35
 
 
 def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VELOCIDADE_PADRAO):
-    from src.gerador_tabuleiro import gerar_tabuleiro_aleatorio
     tipo = selecionar_heuristica()
+
+    if tipo is None:
+        # Voltar ao menu principal
+        pygame.quit()
+        return
+
     if tipo == "comparar":
         comparar_heuristicas(tabuleiro, inicio, objetivo, velocidade)
         return
@@ -336,23 +416,29 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
     fonte_passos = pygame.font.SysFont("Arial", 22, bold=True)
     fonte_caminho = pygame.font.SysFont("Consolas", 18)
     fonte_rotulo = pygame.font.SysFont("Arial", 18, bold=True)
+    fonte_botao = pygame.font.SysFont("Arial", 20, bold=True)
     imgs = carregar_imagens_terreno(CELULA)
     cavalo_img = carregar_cavalo()
-    cor_caminho, cor_explorado = (255,255,0), (220,0,0)
-    x0, y0 = origem_tabuleiro()
-    clock = pygame.time.Clock()
 
-    # 🎨 Cores do tabuleiro (bege e marrom escuro)
+    # 🎨 Cores
     COR_BEGE = (245, 222, 179)
     COR_MARROM = (101, 67, 33)
     COR_BORDA_EXTERNA = (80, 50, 20)
     COR_BORDA_INTERNA = (212, 175, 55)
+    cor_caminho, cor_explorado = (255,255,0), (220,0,0)
+
+    x0, y0 = origem_tabuleiro()
+    clock = pygame.time.Clock()
+
+    # botão voltar (superior direito)
+    BOTAO_VOLTAR = pygame.Rect(LARGURA - 130, 5, 110, 30)
 
     caminho, custo, explorados, _ = busca_a_estrela_animado(tabuleiro, inicio, objetivo, tipo)
     etapa, rodando = 0, True
     while rodando:
         for e in pygame.event.get():
-            if e.type == pygame.QUIT: rodando = False
+            if e.type == pygame.QUIT:
+                rodando = False
             if e.type == pygame.KEYDOWN and e.key == pygame.K_r:
                 tabuleiro = gerar_tabuleiro_aleatorio()
                 caminho, custo, explorados, _ = busca_a_estrela_animado(tabuleiro, inicio, objetivo, tipo)
@@ -365,6 +451,16 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
                 gerar_relatorio_caminho(tabuleiro, caminho, custo, heuristica=tipo)
                 sys.stdout = antigo
                 mostrar_relatorio_sobreposto_texto(tela, buffer.getvalue(), titulo="Relatório Analítico")
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+                if BOTAO_VOLTAR.collidepoint(e.pos):
+                    pygame.quit()
+                    # retorna ao menu principal
+                    tipo = selecionar_heuristica()
+                    if tipo == "comparar":
+                        comparar_heuristicas(tabuleiro, inicio, objetivo, velocidade)
+                    else:
+                        mostrar_busca_animada(tabuleiro, inicio, objetivo, velocidade)
+                    return
 
         tela.fill((255,255,255))
         pygame.draw.rect(tela, (20,20,20), (0,0,LARGURA,BARRA_STATUS_H))
@@ -372,8 +468,17 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
         msg = f"Heurística {tipo.upper()} | {'Executando...' if executando else 'Concluído!'} | Nós: {etapa}/{len(explorados)} | Custo: {custo:.2f}"
         tela.blit(fonte_status.render(msg, True, (255,255,255)), (MARGEM_EXTERNA, 10))
 
+        # ====== BOTÃO VOLTAR (superior direito) ======
+        mouse = pygame.mouse.get_pos()
+        hover = BOTAO_VOLTAR.collidepoint(mouse)
+        cor_btn = (100,150,255) if hover else (70,120,200)
+        pygame.draw.rect(tela, cor_btn, BOTAO_VOLTAR, border_radius=8)
+        texto_voltar = fonte_botao.render("Voltar", True, (255,255,255))
+        tela.blit(texto_voltar, (BOTAO_VOLTAR.centerx - texto_voltar.get_width()//2,
+                                 BOTAO_VOLTAR.centery - texto_voltar.get_height()//2))
+        # =============================================
+
         letras = ["A","B","C","D","E","F","G","H"]
-        # --- Desenha as casas do tabuleiro ---
         for lin in range(BOARD_N):
             for col in range(BOARD_N):
                 cor = COR_BEGE if (lin+col)%2==0 else COR_MARROM
@@ -381,7 +486,7 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
                 img = imgs.get(tabuleiro.grade[lin][col])
                 if img: tela.blit(img, (x0+col*CELULA, y0+lin*CELULA))
 
-        # --- Rótulos laterais e superiores ---
+        # Rótulos laterais e superiores
         for i in range(BOARD_N):
             letra = fonte_rotulo.render(letras[i], True, (0,0,0))
             num = fonte_rotulo.render(str(8-i), True, (0,0,0))
@@ -390,41 +495,29 @@ def mostrar_busca_animada(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=VEL
             tela.blit(num, (x0 - AREA_ROTULO + 5, y0 + i*CELULA + CELULA//2 - num.get_height()//2))
             tela.blit(num, (x0 + BOARD_N*CELULA + 8, y0 + i*CELULA + CELULA//2 - num.get_height()//2))
 
-        # === 🪵 BORDA DE MADEIRA AO REDOR DO TABULEIRO ===
-        # Moldura externa marrom escuro
-        pygame.draw.rect(
-            tela,
-            COR_BORDA_EXTERNA,
-            (x0 - 4, y0 - 4, BOARD_N*CELULA + 8, BOARD_N*CELULA + 8),
-            6
-        )
-        # Borda interna dourada
-        pygame.draw.rect(
-            tela,
-            COR_BORDA_INTERNA,
-            (x0, y0, BOARD_N*CELULA, BOARD_N*CELULA),
-            4
-        )
+        # Borda do tabuleiro
+        pygame.draw.rect(tela, COR_BORDA_EXTERNA, (x0 - 4, y0 - 4, BOARD_N*CELULA + 8, BOARD_N*CELULA + 8), 6)
+        pygame.draw.rect(tela, COR_BORDA_INTERNA, (x0, y0, BOARD_N*CELULA, BOARD_N*CELULA), 4)
 
-        # --- Início e chegada ---
+        # Início e chegada
         if imgs.get("inicio"):
             tela.blit(imgs["inicio"], (x0 + inicio[1]*CELULA, y0 + inicio[0]*CELULA))
         if imgs.get("chegada"):
             tela.blit(imgs["chegada"], (x0 + objetivo[1]*CELULA, y0 + objetivo[0]*CELULA))
 
-        # --- Nós explorados ---
+        # Nós explorados
         if executando:
             for (lin,col) in explorados[:etapa]:
                 cx = x0+col*CELULA+CELULA//2
                 cy = y0+lin*CELULA+CELULA//2
                 pygame.draw.circle(tela, cor_explorado, (cx,cy), 6)
 
-        # --- Cavalo ---
+        # Cavalo
         pos = explorados[etapa] if etapa < len(explorados) else (caminho[-1] if caminho else inicio)
         cx, cy = x0+pos[1]*CELULA+CELULA//2, y0+pos[0]*CELULA+CELULA//2
         tela.blit(cavalo_img, (cx-cavalo_img.get_width()//2, cy-cavalo_img.get_height()//2))
 
-        # --- Caminho final ---
+        # Caminho final
         if not executando and caminho:
             for i,(lin,col) in enumerate(caminho):
                 cx1 = x0+col*CELULA+CELULA//2
