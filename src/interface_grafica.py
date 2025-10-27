@@ -248,13 +248,13 @@ def comparar_heuristicas(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=0.35
         tabuleiro_h2_x = tabuleiro_h1_x + largura_tab + 80
 
         # execuções
-        t0 = time.time(); c1, custo1, e1 = executar_busca(tab, heuristica_h1); tempo1 = time.time()-t0
-        t0 = time.time(); c2, custo2, e2 = executar_busca(tab, heuristica_h2); tempo2 = time.time()-t0
+        c1, custo1, e1 = executar_busca(tab, heuristica_h1); 
+        c2, custo2, e2 = executar_busca(tab, heuristica_h2); 
+        
         etapa, max_etapas, terminou = 0, max(len(e1), len(e2)), False
 
         # Detalhes do relatório comparativo
         ganho_nos = 100 * (1 - len(e2)/len(e1)) if len(e1) else 0
-        ganho_tempo = 100 * (1 - tempo2/tempo1) if tempo1 else 0
         h1_media_custo = custo1 / len(e1) if e1 else 0
         h2_media_custo = custo2 / len(e2) if e2 else 0
         h1_num_movimentos = len(c1)
@@ -290,11 +290,11 @@ def comparar_heuristicas(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=0.35
 
                         print("\n=== RELATÓRIO COMPARATIVO DE HEURÍSTICAS ===\n")
                         # Relatório detalhado comparativo
-                        print(f"H1 (Fraca) - Custo: {custo1:.2f} | Nós Expandidos: {len(e1)} | Tempo: {tempo1:.3f}s | Custo Médio por Nó: {h1_media_custo:.2f} | Movimentos: {h1_num_movimentos}")
-                        print(f"H2 (Forte) - Custo: {custo2:.2f} | Nós Expandidos: {len(e2)} | Tempo: {tempo2:.3f}s | Custo Médio por Nó: {h2_media_custo:.2f} | Movimentos: {h2_num_movimentos}")
+                        print(f"H1 (Fraca) - Custo: {custo1:.2f} | Nós Expandidos: {len(e1)} | Custo Médio por Nó: {h1_media_custo:.2f} | Movimentos: {h1_num_movimentos}")
+                        print(f"H2 (Forte) - Custo: {custo2:.2f} | Nós Expandidos: {len(e2)} | Custo Médio por Nó: {h2_media_custo:.2f} | Movimentos: {h2_num_movimentos}")
                         print(f"\nComparação entre as heurísticas:")
                         print(f"H2 expandiu {abs(ganho_nos):.1f}% {'menos' if ganho_nos>0 else 'mais'} nós.")
-                        print(f"H2 foi {abs(ganho_tempo):.1f}% {'mais rápida' if ganho_tempo>0 else 'mais lenta'} que H1.")
+                
                         print(f"\nResumo Comparativo:")
                         print(f"H1 teve {h1_num_movimentos} movimentos e H2 teve {h2_num_movimentos} movimentos.")
                         print(f"H2 foi {'mais eficiente' if ganho_nos > 0 else 'menos eficiente'} com relação ao número de nós expandidos.")
@@ -372,8 +372,8 @@ def comparar_heuristicas(tabuleiro: Tabuleiro, inicio, objetivo, velocidade=0.35
             desenhar(tabuleiro_h1_x, e1, c1, "H1 - Fraca", (60,120,255))
             desenhar(tabuleiro_h2_x, e2, c2, "H2 - Forte", (255,120,60))
 
-            tela.blit(fonte_info.render(f"H1 → Custo {custo1:.2f} | Nós {len(e1)} | Tempo {tempo1:.3f}s", True, (0,0,0)), (tabuleiro_h1_x, altura_total - 160))
-            tela.blit(fonte_info.render(f"H2 → Custo {custo2:.2f} | Nós {len(e2)} | Tempo {tempo2:.3f}s", True, (0,0,0)), (tabuleiro_h2_x, altura_total - 160))
+            tela.blit(fonte_info.render(f"H1 → Custo {custo1:.2f} | Nós {len(e1)}", True, (0,0,0)), (tabuleiro_h1_x, altura_total - 160))
+            tela.blit(fonte_info.render(f"H2 → Custo {custo2:.2f} | Nós {len(e2)}", True, (0,0,0)), (tabuleiro_h2_x, altura_total - 160))
 
             # ====== BOTÃO VOLTAR ======
             BOTAO_VOLTAR = pygame.Rect(largura_total//2 - 80, altura_total - 60, 160, 40)
