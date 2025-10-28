@@ -113,7 +113,7 @@ Ao iniciar, será exibido o **menu principal** com as seguintes opções:
 
 ## 🧭 Navegação na Interface
 
-- **Setas e cliques:** selecione as opções do menu.
+- **Cliques:** selecione as opções do menu.
 - **Botão “Voltar”:** retorna à tela anterior.
 - **Tecla `R`:** gera um novo tabuleiro aleatório durante a execução.
 - **Tecla `ENTER`:** exibe o relatório analítico com métricas da busca.
@@ -174,18 +174,11 @@ O projeto comprova os seguintes princípios de **Sistemas Inteligentes**:
 
 Exemplo:
 
-![Comparativo H1 x H2](assets/exemplo_comparativo.png)
+![Comparativo H1 x H2](./assets/exemplo_comparativo.png)
 
 ---
 
-## 🧾 Licença
-
-Este projeto foi desenvolvido para fins educacionais e acadêmicos.  
-Você pode utilizá-lo e modificá-lo livremente para aprendizado, desde que mantenha os devidos créditos ao autor original.
-
----
-
-## 👨‍💻 Autor
+## 👨‍💻 Autores
 
 **[Kerlen Melo]** & **[Rafael Marques]**
 Curso de Análise e Desenvolvimento de Sistemas — IFPE  
